@@ -1,29 +1,29 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
+  del, get,
+  getModelSchemaRef, param, patch, post, put, requestBody,
+  response
 } from '@loopback/rest';
+import axios from 'axios';
+import {configuracion} from '../config/config';
 import {Usuario} from '../models';
 import {UsuarioRepository} from '../repositories';
+import {AuthService} from '../services';
 
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
     public usuarioRepository : UsuarioRepository,
+    @service(AuthService)
+    public servicioAuth: AuthService
   ) {}
 
   @post('/usuarios')
@@ -44,7 +44,46 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, 'id'>,
   ): Promise<Usuario> {
-    return this.usuarioRepository.create(usuario);
+    const clave = this.servicioAuth.GenerarClave();
+        const claveCifrada = this.servicioAuth.CifrarClave(clave);
+        usuario.password = claveCifrada;
+        let tipo = ''; //Definimos el tipo de comunicacion
+        tipo = configuracion.tipoComunicacion;
+        let servicioWeb = '';
+        let destino = '';
+
+        if(tipo == 'sms'){
+          destino = usuario.telefono;
+          servicioWeb = 'send_sms';
+        }else{
+          destino = usuario.correo;
+          servicioWeb = 'send_email';
+        }
+
+        const asunto = 'Registro de usuario en plataforma';
+        const contenido = `Hola, ${usuario.nombre} ${usuario.apellidos} su contraseña en el portal es: ${clave}`
+        axios({
+          method: 'post',
+          url: configuracion.baseURL + servicioWeb,
+
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          data: {
+            destino: destino,
+            asunto: asunto,
+            contenido: contenido
+          }
+        }).then((data) => {
+          console.log(data)
+        }).catch((err) => {
+          console.log(err)
+        });
+
+        const p = await this.usuarioRepository.create(usuario);
+
+      return p;
   }
 
   @get('/usuarios/count')
