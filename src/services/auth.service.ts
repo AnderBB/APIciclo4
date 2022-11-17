@@ -3,6 +3,7 @@ import {repository} from '@loopback/repository';
 import {configuracion} from '../config/config';
 import {Usuario} from '../models';
 import {UsuarioRepository} from '../repositories';
+
 // Nuevas librerias
 const generator = require("password-generator");
 const cryptoJS = require("crypto-js");
