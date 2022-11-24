@@ -40,16 +40,15 @@ export class UsuarioController {
   async login(
     @requestBody() credenciales: Credenciales
   ) {
-
     const user = await this.servicioAuth.identificarPersona(credenciales.usuario, credenciales.password);
     if (user) {
-      const token = this.servicioAuth.GenerarTokenJWT(user);
+      const token = this.servicioAuth.generarTokenJWT(user);
 
       return {
         status: "success",
         data: {
           nombre: user.nombre,
-          apellidos: user.apellidos,
+          auserellidos: user.apellidos,
           correo: user.correo,
           id: user.id
         },
@@ -84,13 +83,12 @@ export class UsuarioController {
     const clave = this.servicioAuth.GenerarClave();
     const claveCifrada = this.servicioAuth.CifrarClave(clave);
     usuario.password = claveCifrada;
-
-    let tipo = '';
-    tipo = configuracion.tipoComunicacion; //Definimos el tipo de comunicacion
+    let tipo = ''; //Definimos el tipo de comunicacion
+    tipo = configuracion.tipoComunicacion;
     let servicioWeb = '';
     let destino = '';
 
-    if (tipo == "sms") {
+    if (tipo == 'sms') {
       destino = usuario.telefono;
       servicioWeb = 'send_sms';
     } else {
