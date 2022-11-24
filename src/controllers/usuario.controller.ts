@@ -42,7 +42,7 @@ export class UsuarioController {
   ) {
     const user = await this.servicioAuth.identificarPersona(credenciales.usuario, credenciales.password);
     if (user) {
-      const token = this.servicioAuth.generarTokenJWT(user);
+      const token = this.servicioAuth.GenerarTokenJWT(user);
 
       return {
         status: "success",
