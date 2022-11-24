@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 @injectable({scope: BindingScope.TRANSIENT})
 export class AuthService {
   constructor(@repository(UsuarioRepository)
-  public usuarioRepository: UsuarioRepository) {}
+  public usuarioRepository: UsuarioRepository) { }
 
   //Generacion de claves
   GenerarClave() {
@@ -25,8 +25,8 @@ export class AuthService {
   }
 
   //JWT
-  generarTokenJWT(usuario: Usuario) {
-    let token = jwt.sign({
+  GenerarTokenJWT(usuario: Usuario) {
+    const token = jwt.sign({
       data: {
         id: usuario.id,
         correo: usuario.correo,
@@ -39,7 +39,7 @@ export class AuthService {
 
   validarTokenJWT(token: string) {
     try {
-      let datos = jwt.verify(token, configuracion.claveJWT);
+      const datos = jwt.verify(token, configuracion.claveJWT);
       return datos;
     } catch (error) {
       return false;
@@ -49,9 +49,13 @@ export class AuthService {
   //Autenticacion
   identificarPersona(correo: string, password: string) {
     try {
-      let user = this.usuarioRepository.findOne({where:
-                          {correo: correo,
-                          password: password}})
+      const user = this.usuarioRepository.findOne({
+        where:
+        {
+          correo: correo,
+          password: password
+        }
+      })
       if (user) {
         return user;
       }
@@ -60,4 +64,6 @@ export class AuthService {
       return false;
     }
   }
+
+
 }

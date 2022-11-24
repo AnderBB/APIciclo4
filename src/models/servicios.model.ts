@@ -22,7 +22,7 @@ export class Servicios extends Entity {
   destino: string;
 
   @property({
-    type: 'date',
+    type: 'string',
     required: true,
   })
   fecha: string;

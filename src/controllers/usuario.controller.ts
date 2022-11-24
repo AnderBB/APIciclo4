@@ -23,41 +23,42 @@ import {AuthService} from '../services';
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
-    public usuarioRepository : UsuarioRepository,
+    public usuarioRepository: UsuarioRepository,
     @service(AuthService)
     public servicioAuth: AuthService
-  ) {}
+  ) { }
 
-//Servicio de login
-@authenticate.skip()
-@post('/login', {
-  responses: {
-    '200': {
-      description: 'Identificación de usuarios'
+  //Servicio de login
+  @authenticate.skip()
+  @post('/login', {
+    responses: {
+      '200': {
+        description: 'Identificación de usuarios'
+      }
+    }
+  })
+  async login(
+    @requestBody() credenciales: Credenciales
+  ) {
+
+    const user = await this.servicioAuth.identificarPersona(credenciales.usuario, credenciales.password);
+    if (user) {
+      const token = this.servicioAuth.GenerarTokenJWT(user);
+
+      return {
+        status: "success",
+        data: {
+          nombre: user.nombre,
+          apellidos: user.apellidos,
+          correo: user.correo,
+          id: user.id
+        },
+        token: token
+      }
+    } else {
+      throw new HttpErrors[401]("Datos invalidos")
     }
   }
-})
-async login(
-  @requestBody() credenciales: Credenciales
-) {
-  const user = await this.servicioAuth.identificarPersona(credenciales.usuario, credenciales.password);
-  if (user) {
-    const token = this.servicioAuth.generarTokenJWT(user);
-
-    return {
-      status: "success",
-      data: {
-        nombre: user.nombre,
-        auserellidos: user.apellidos,
-        correo: user.correo,
-        id: user.id
-      },
-      token: token
-    }
-  } else {
-    throw new HttpErrors[401]("Datos invalidos")
-  }
-}
 
   @authenticate.skip()
   @post('/usuarios')
@@ -78,46 +79,49 @@ async login(
     })
     usuario: Omit<Usuario, 'id'>,
   ): Promise<Usuario> {
+
+
     const clave = this.servicioAuth.GenerarClave();
-        const claveCifrada = this.servicioAuth.CifrarClave(clave);
-        usuario.password = claveCifrada;
-        let tipo = ''; //Definimos el tipo de comunicacion
-        tipo = configuracion.tipoComunicacion;
-        let servicioWeb = '';
-        let destino = '';
+    const claveCifrada = this.servicioAuth.CifrarClave(clave);
+    usuario.password = claveCifrada;
 
-        if(tipo == 'sms'){
-          destino = usuario.telefono;
-          servicioWeb = 'send_sms';
-        }else{
-          destino = usuario.correo;
-          servicioWeb = 'send_email';
-        }
+    let tipo = '';
+    tipo = configuracion.tipoComunicacion; //Definimos el tipo de comunicacion
+    let servicioWeb = '';
+    let destino = '';
 
-        const asunto = 'Registro de usuario en plataforma';
-        const contenido = `Hola, ${usuario.nombre} ${usuario.apellidos} su contraseña en el portal es: ${clave}`
-        axios({
-          method: 'post',
-          url: configuracion.baseURL + servicioWeb,
+    if (tipo == "sms") {
+      destino = usuario.telefono;
+      servicioWeb = 'send_sms';
+    } else {
+      destino = usuario.correo;
+      servicioWeb = 'send_email';
+    }
 
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          data: {
-            destino: destino,
-            asunto: asunto,
-            contenido: contenido
-          }
-        }).then((data) => {
-          console.log(data)
-        }).catch((err) => {
-          console.log(err)
-        });
+    const asunto = 'Registro de usuario en plataforma';
+    const contenido = `Hola, ${usuario.nombre} ${usuario.apellidos} su contraseña en el portal es: ${clave}`
+    axios({
+      method: 'post',
+      url: configuracion.baseURL + servicioWeb,
 
-        const p = await this.usuarioRepository.create(usuario);
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      data: {
+        destino: destino,
+        asunto: asunto,
+        contenido: contenido
+      }
+    }).then((data) => {
+      console.log(data)
+    }).catch((err) => {
+      console.log(err)
+    });
 
-      return p;
+    const p = await this.usuarioRepository.create(usuario);
+
+    return p;
   }
 
   @get('/usuarios/count')

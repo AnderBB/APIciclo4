@@ -10,10 +10,10 @@ export class Cliente extends Entity {
   id?: string;
 
   @property({
-    type: 'number',
+    type: 'string',
     required: true,
   })
-  cedula: number;
+  cedula: string;
 
   @property({
     type: 'string',

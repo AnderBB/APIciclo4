@@ -41,7 +41,7 @@
     "url": ""
   },
   "author": "AnderBB <srdarkandrew@gmail.com>",
-  "license": "",
+  "license": "ISC",
   "files": [
     "README.md",
     "dist",
